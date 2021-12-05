@@ -3,9 +3,17 @@ import java.util.ArrayList;
 import java.awt.Point;
 
 public class Evaluation {
+	
+  /*
+   * Methode qui test si un point est membre d'un ensemble de points
+   */
   private boolean isMember(ArrayList<Point> points, Point p){
     for (Point point:points) if (point.equals(p)) return true; return false;
   }
+  
+  /*
+   * Methode qui test si un presume fvs est valide 
+   */
   public boolean isValid(ArrayList<Point> origPoints, ArrayList<Point> fvs, int edgeThreshold){
     ArrayList<Point> vertices = new ArrayList<Point>();
     for (Point p:origPoints) if (!isMember(fvs,p)) vertices.add((Point)p.clone());
@@ -31,6 +39,10 @@ public class Evaluation {
 
     return true;
   }
+  
+  /*
+   * Lethode qui retourne les voisins d'un point particulier
+   */
   public ArrayList<Point> neighbor(Point p, ArrayList<Point> vertices, int edgeThreshold){
     ArrayList<Point> result = new ArrayList<Point>();
 

@@ -3,15 +3,26 @@ package algorithms;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Random;
 
 public class DefaultTeam {
 
-	private ArrayList<Point> pointsNotInFvs = new ArrayList<Point>();
-	
-  public Point mostConnectedPoint(ArrayList<Point> points, int edgeThreshold){
+  /*
+   * Membre indiquant l'ensemble de points qui ne sont pas inclus dans le fvs
+   */
+  private ArrayList<Point> pointsNotInFvs = new ArrayList<Point>();
+
+  /*
+   * Methode principale
+   */
+  public ArrayList<Point> calculFVS(ArrayList<Point> points, int edgeThreshold) {
+	return remove2add1(points, edgeThreshold);	
+  }
+  
+  /*
+   *  Methode qui trouve le point du graphe avec le maximum de voisins
+   */
+  private Point mostConnectedPoint(ArrayList<Point> points, int edgeThreshold){
 	  Evaluation ev = new Evaluation();
 	  int numberOfNeighbor = -1;
 	  Point pointMost = null;
@@ -22,134 +33,89 @@ public class DefaultTeam {
 		}
 	  }
 	  return pointMost;
-  }
-  
-  public ArrayList<Point> glouton(ArrayList<Point> points, int edgeThreshold){
-		this.pointsNotInFvs = null;
-	    Evaluation ev = new Evaluation();
-	    ArrayList<Point> fvs = new ArrayList<Point>(); 
-	    ArrayList<Point> bestFvs = new ArrayList<Point>(); 
-	    for (int i = 0; i < 100; i++) {
-	    	Collections.shuffle(points, new Random(System.nanoTime()));
-	    	ArrayList<Point> tmpPoints = (ArrayList<Point>) points.clone();
-		    while (!(ev.isValid(points, bestFvs, edgeThreshold))) {
-		    	Point pointMost = mostConnectedPoint(tmpPoints, edgeThreshold);
-		    	bestFvs.add(pointMost);
-		    	removeElement(tmpPoints, pointMost);
-		    }
-		    if (i == 0) {
-		    	fvs = (ArrayList<Point>) bestFvs.clone();
-		    	pointsNotInFvs = null;
-		    	pointsNotInFvs = tmpPoints;
-		    } else if (bestFvs.size() < fvs.size()){
-		    	fvs = (ArrayList<Point>) bestFvs.clone();
-		    	pointsNotInFvs = null;
-		    	pointsNotInFvs = tmpPoints;
-		    }
-		}
-	    return fvs;
-  }
-  
-  //--------------------------------------------------
-  public ArrayList<PointWithWeight> setWeights(ArrayList<Point> points, int edgeThreshold){
-	  Evaluation ev = new Evaluation();
-	  ArrayList<PointWithWeight> result = new ArrayList<PointWithWeight>();
-	  for (Point point : points) {
-		int weight = ev.neighbor(point, points, edgeThreshold).size();
-		PointWithWeight p = new PointWithWeight(point, weight);
-		result.add(p);
-	  }
-	  return result;  
   } 
   
-  public ArrayList<Point> feedback_2_approximation(ArrayList<Point> points, int edgeThreshold){
-	  Evaluation ev = new Evaluation();
-	  ArrayList<PointWithWeight> pointsW = setWeights(points, edgeThreshold);
-	  ArrayList<PointWithWeight> fvs = new ArrayList<PointWithWeight>();
-	  ArrayList<Point> points_ = (ArrayList<Point>) points.clone();
-	  ArrayList<Point> fvs_ = new ArrayList<Point>();
-	  for (PointWithWeight pointW : pointsW) {
-		if (pointW.getWeight() == 0) {
-			fvs.add(pointW);
-			fvs_.add(pointW.getP());
-			removeElementW(pointsW, pointW);
-			removeElement(points_, pointW.getP());
-		}
-	  }
-	  int i = 0;
-	  while(pointsW.size() > 0) {
-		  i++;
-		  if (!(ev.isValid(points, fvs_, edgeThreshold))) {
-			  
-		  } else {
-			  
-		  }
-	  }
-	  return null;
-  }
-  
-  //--------------------------------------------------
-
-  public ArrayList<Point> remove2add1(ArrayList<Point> points, int edgeThreshold){
-	Evaluation ev = new Evaluation();
-	ArrayList<Point> bestFvs = glouton(points, edgeThreshold);
-	for (int y = 0; y < 5; y++) {
-		ArrayList<Point> naifFvs = glouton(points, edgeThreshold);
-		ArrayList<Point> memPointsNotInFvs = (ArrayList<Point>) this.pointsNotInFvs.clone();
-	    boolean fvsAmeliorer = false;
-	    boolean finishedAllPossibilities = false;
-    	Collections.shuffle(naifFvs, new Random(System.nanoTime()));
-    	Collections.shuffle(this.pointsNotInFvs, new Random(System.nanoTime()));
-	    while(!finishedAllPossibilities) {
-    		ArrayList<Point> newFvs = (ArrayList<Point>) naifFvs.clone();
-    		ArrayList<Point> newPointsNotInFvs = (ArrayList<Point>) memPointsNotInFvs.clone();
-    		int j=0, k=1;
-    		while(j < (naifFvs.size()-1) || k < naifFvs.size()) {
-    				if (naifFvs.get(j) != naifFvs.get(k) && this.pointsNotInFvs != null) {
-    					int i=0;
-    					while(i < this.pointsNotInFvs.size()) {
-    						ArrayList<Point> tmpFvs = (ArrayList<Point>) naifFvs.clone();
-    						removeTwoElement(tmpFvs, naifFvs.get(j), naifFvs.get(k));
-    						tmpFvs.add(this.pointsNotInFvs.get(i));
-    						if (ev.isValid(points, tmpFvs, edgeThreshold)) {
-	        					fvsAmeliorer = true;
-	        					newFvs = (ArrayList<Point>) tmpFvs.clone();
-	        					removeElement(newPointsNotInFvs, this.pointsNotInFvs.get(i));
-	        					newPointsNotInFvs.add(naifFvs.get(j));
-	        					newPointsNotInFvs.add(naifFvs.get(k));
-	        					// to break
-	        					i = this.pointsNotInFvs.size();
-	        					j = naifFvs.size();
-	        					k = naifFvs.size();
-    						}
-    						tmpFvs = null;
-    						i++;
-    					}
-    				}
-    			j++;k++;
-    		}
-	        if (naifFvs.size() == newFvs.size()) break;
-	        naifFvs = (ArrayList<Point>) newFvs.clone();
-	        this.pointsNotInFvs = (ArrayList<Point>) newPointsNotInFvs.clone();
-	        if (!fvsAmeliorer) {
-	        	finishedAllPossibilities = true;
-	        }
-	    }
-	    	if (naifFvs.size() < bestFvs.size())
-	    		bestFvs = (ArrayList<Point>) naifFvs.clone();
-	    	System.out.println("size : "+ bestFvs.size());
-	  }
-	  return bestFvs;
-  }
-  
-  public ArrayList<Point> calculFVS(ArrayList<Point> points, int edgeThreshold) {
+  /*
+   * Methode qui implemente un algorithme naif pour calculer le fvs en supprimant les points
+   * avec le plus grand nombre de voisins
+   * */
+  private ArrayList<Point> glouton(ArrayList<Point> points, int edgeThreshold){
 		Evaluation ev = new Evaluation();
-	    ArrayList<Point> fvs = new ArrayList<Point>();	    
-	    fvs = remove2add1(points, edgeThreshold);
-	    return fvs;	
+	    ArrayList<Point> fvs = new ArrayList<Point>();
+	    ArrayList<Point> tmpPoints = (ArrayList<Point>) points.clone();
+
+	    while (!(ev.isValid(points, fvs, edgeThreshold))) {
+	    	Point pointMost = mostConnectedPoint(tmpPoints, edgeThreshold);
+	    	fvs.add(pointMost);
+	    	removeElement(tmpPoints, pointMost);
+	    }
+	    pointsNotInFvs = tmpPoints;
+	    return fvs;
   }
-  
-  public ArrayList<Point> removeElement(ArrayList<Point> points, Point p)
+
+  /*
+   * Methode qui recupere un fvs primaire genere grace à la methode glouton
+   * puis supprime 2 points de ce dernier le remplace par un point non inclu pour tester si
+   * le fvs est toujours valide, l'ensemble du fvs est randomiser à chaque tour de boucle
+   * pour inclure une notion d'alea pour avoir de nouveaux resultats peutetre meilleurs
+   * que les anciens, l'algorithme prend biensur le meilleur resultat
+   * */
+  private ArrayList<Point> remove2add1(ArrayList<Point> points, int edgeThreshold) {
+	  Evaluation ev = new Evaluation();
+	    ArrayList<Point> fvsW = new ArrayList<Point>();
+	    ArrayList<Point> fvsF = new ArrayList<Point>();
+	    ArrayList<Point> firstSolution = glouton(points, edgeThreshold);
+	    
+	    fvsF = (ArrayList<Point>) firstSolution.clone();
+	    
+	    for (int y = 0; y < 4; y++) {
+	    	fvsW = (ArrayList<Point>) firstSolution.clone();
+			Collections.shuffle(fvsW, new Random(System.nanoTime()));
+		    boolean fvsAmeliorer = false;
+		    boolean finishedAllPossibilities = false;
+		    while (!finishedAllPossibilities) {
+	    		ArrayList<Point> newFvs = fvsW;
+	    		ArrayList<Point> newPointsNotInFvs = this.pointsNotInFvs;
+		        for (int j = 0; j < (fvsW.size()-1); j++) {
+		            for (int k = 1; k < fvsW.size(); k++) {
+		        		if (fvsW.get(j) != fvsW.get(k) && this.pointsNotInFvs != null) {
+		        			for (int i = 0; i < this.pointsNotInFvs.size(); i++) {
+		        				ArrayList<Point> tmpFvs = (ArrayList<Point>) fvsW.clone(); 
+		        				removeTwoElement(tmpFvs, fvsW.get(j), fvsW.get(k));
+		        				tmpFvs.add(this.pointsNotInFvs.get(i));
+		        				if (ev.isValid(points, tmpFvs, edgeThreshold)) {
+		        					fvsAmeliorer = true;
+		        					newFvs = tmpFvs;
+		        					removeElement(newPointsNotInFvs, this.pointsNotInFvs.get(i));
+		        					newPointsNotInFvs.add(fvsW.get(j));
+		        					newPointsNotInFvs.add(fvsW.get(k));
+		        					// to break
+		        					i = this.pointsNotInFvs.size();
+		        					j = fvsW.size();
+		        					k = fvsW.size();
+		        				}
+		    				}
+		        		}
+		        	}
+		    	}
+		        if (fvsW.size() == newFvs.size()) break;
+		        fvsW = newFvs;
+		        this.pointsNotInFvs = newPointsNotInFvs;
+		        if (!fvsAmeliorer) {
+		        	finishedAllPossibilities = true;
+		        }
+		    }
+		   if (fvsW.size() < fvsF.size()) {
+			   fvsF = (ArrayList<Point>) fvsW.clone();
+		   }
+		}
+	    return fvsF;		  
+  }
+    
+  /*
+   * Methode permettant de suprimmer un point d'un ensemble de points
+   * */
+  private ArrayList<Point> removeElement(ArrayList<Point> points, Point p)
   {
 	  for (int i = points.size() - 1; i >= 0; i--) {
 		    if (points.get(i) == p) {
@@ -160,7 +126,10 @@ public class DefaultTeam {
 	  return points;
   }
   
-  public ArrayList<Point> removeTwoElement(ArrayList<Point> points, Point p, Point h)
+  /*
+   * Methode qui supprime deux points d'un ensemble de points
+   */
+  private ArrayList<Point> removeTwoElement(ArrayList<Point> points, Point p, Point h)
   {
 	  int cpt = 0;
 	  for (int i = points.size() - 1; i >= 0; i--) {
@@ -176,44 +145,6 @@ public class DefaultTeam {
 		        if (cpt == 2) {
 		        	i = -1; //break
 		        }
-		    }
-		}
-	  return points;
-  }
-  
-  public ArrayList<Point> removeThreeElement(ArrayList<Point> points, Point p, Point h, Point x)
-  {
-	  int cpt = 0;
-	  for (int i = points.size() - 1; i >= 0; i--) {
-		    if (points.get(i) == p) {
-		        points.remove(i);
-		        cpt++;
-		        if (cpt == 3) {
-		        	i = -1; //break
-		        }
-		    } else if (points.get(i) == h) {
-		        points.remove(h);
-		        cpt++;
-		        if (cpt == 3) {
-		        	i = -1; //break
-		        }
-		    } else if (points.get(i) == x) {
-		        points.remove(x);
-		        cpt++;
-		        if (cpt == 3) {
-		        	i = -1; //break
-		        }
-		    }
-		}
-	  return points;
-  }
-  
-  public ArrayList<PointWithWeight> removeElementW(ArrayList<PointWithWeight> points, PointWithWeight p)
-  {
-	  for (int i = points.size() - 1; i >= 0; i--) {
-		    if (points.get(i) == p) {
-		        points.remove(i);
-		        i = -1; // break
 		    }
 		}
 	  return points;
